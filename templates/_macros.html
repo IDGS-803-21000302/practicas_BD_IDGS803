@@ -1,0 +1,20 @@
+{%macro render_input(name,placeholder,type='text')%}
+
+<p><input type="{{type}}" name="{{name}}" placeholder="{{placeholder}}"></p>
+
+
+{%endmacro%}
+
+{%macro render_field(field)%}
+
+<td>{{field.label}}</td>
+<dd>{{field(**kwargs)|safe}}</dd>
+
+{% if field.errors %}
+<ul class="errors" style="color: red;">
+    {% for error in field.errors %}
+    <li>{{ error }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+{%endmacro%}
