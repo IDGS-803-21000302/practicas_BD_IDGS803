@@ -36,6 +36,75 @@ def ABC_Completo():
     trabajador=Trabajadores.query.all()
     return render_template("ABC_Completo.html", trabajador=trabajador)
 
+@app.route('/eliminar', methods=["GET", "POST"])
+def eliminar():
+    alum_form = forms.UsersForm2(request.form)
+    if request.method == 'GET':
+        id = request.args.get('id')
+        alum1 = db.session.query(Trabajadores).filter(Trabajadores.id == id).first()
+        if alum1:
+            alum_form.id.data = id
+            alum_form.nombre.data = alum1.nombre
+            alum_form.email.data = alum1.email
+            alum_form.telefono.data = alum1.telefono
+            alum_form.direccion.data = alum1.direccion
+            alum_form.sueldo.data = alum1.sueldo
+        else:
+            flash('No se encontró ningún trabajador con el ID proporcionado.', 'error')
+            return redirect('ABC_Completo')
+
+    if request.method == 'POST':
+        id = alum_form.id.data
+        alum = db.session.query(Trabajadores).get(id)
+        if alum:
+            db.session.delete(alum)
+            db.session.commit()
+            flash('El trabajador ha sido eliminado correctamente.', 'success')
+            return redirect('ABC_Completo')
+        else:
+            flash('No se encontró ningún trabajador con el ID proporcionado.', 'error')
+            return redirect('ABC_Completo')
+
+    return render_template("eliminar.html", form=alum_form)
+
+
+
+@app.route('/modificar', methods=["GET", "POST"])
+def modificar():
+    alum_form = forms.UsersForm2(request.form)
+    if request.method == 'GET':
+        id = request.args.get('id')
+        alum1 = db.session.query(Trabajadores).filter(Trabajadores.id == id).first()
+        if alum1:
+            alum_form.id.data = id
+            alum_form.nombre.data = alum1.nombre
+            alum_form.email.data = alum1.email
+            alum_form.telefono.data = alum1.telefono
+            alum_form.direccion.data = alum1.direccion
+            alum_form.sueldo.data = alum1.sueldo
+        else:
+            flash('No se encontró ningún trabajador con el ID proporcionado.', 'error')
+            return redirect('ABC_Completo')
+
+    if request.method == 'POST':
+        id = alum_form.id.data
+        alum1 = db.session.query(Trabajadores).filter(Trabajadores.id == id).first()
+        if alum1:
+            alum1.nombre = alum_form.nombre.data
+            alum1.email = alum_form.email.data
+            alum1.telefono = alum_form.telefono.data
+            alum1.direccion = alum_form.direccion.data
+            alum1.sueldo = alum_form.sueldo.data
+            db.session.commit()
+            flash('Los datos del trabajador han sido actualizados correctamente.', 'success')
+            return redirect('ABC_Completo')
+        else:
+            flash('No se encontró ningún trabajador.', 'error')
+            return redirect('ABC_Completo')
+
+    return render_template("modificar.html", form=alum_form)
+
+
 @app.route("/alumnos",methods=["GET","POST"])
 def alum():
     nom=''
