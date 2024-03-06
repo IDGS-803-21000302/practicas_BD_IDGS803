@@ -1,0 +1,54 @@
+{%extends 'layout.html' %}
+
+{%block content %}
+{% import "_macros.html" as macros %}
+<h1>Pedidos</h1>
+<form action="" method="post" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    {{macros.render_field(form.nombre,class="forms-controls")}}
+    {{macros.render_field(form.direccion)}}
+    {{macros.render_field(form.telefono)}}
+
+
+    <input type="submit" name="tn1" value="registrar">
+
+    <form action="" method="post" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        {{macros.render_field(form.tamano_pizza,class="forms-controls")}}
+        {{macros.render_field(form.ingredientes)}}
+        {{macros.render_field(form.numero_pizzas)}}
+
+
+        <input type="submit" name="pizza" value="agregar">
+
+        <div class="container">
+            <div class="row">
+                <h3>PIZZAS AGREGADAS</h3>
+                <table class="table table-bordered table-hover">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>TAMAÑO</th>
+                            <th>Ingredientes</th>
+                            <th>Num. Pizzas</th>
+                            <th>Sub total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pizza in pizzas %}
+                        <tr>
+                            <td>{{ pizza.tamano }}</td>
+                            <td>{{ pizza.ingredientes }}</td>
+                            <td>{{ pizza.numero }}</td>
+                            <td>{{ pizza.sub_total }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+
+    <h1>Nombre: {{nom}}</h1>
+    {%endblock%}

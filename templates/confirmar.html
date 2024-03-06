@@ -1,0 +1,10 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h2>Confirmación de Pedido</h2>
+<p>El costo total de tu pedido es: {{ costo_total }}.</p>
+<p>¿Deseas confirmar tu pedido?</p>
+<form action="/pedido" method="post">
+    <input type="submit" value="Confirmar">
+</form>
+{% endblock %}
