@@ -1,0 +1,207 @@
+{% extends "layout.html" %}
+{% from "_macros.html" import render_field %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <h3>Información del Pedido</h3>
+            <form action="/dispatch" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {{ render_field(form.nombre, class="form-control", placeholder="Nombre") }}
+                {{ render_field(form.direccion, class="form-control", placeholder="Dirección") }}
+                {{ render_field(form.telefono, class="form-control", placeholder="Teléfono") }}
+                {{ render_field(form.total, class="form-control", placeholder="Total") }}
+                <input type="submit" name="btn1" value="Agregar" class="btn btn-primary mt-3">
+            </form>
+        </div>
+        <div class="col-md-6">
+            <h3>Agregar Pizza</h3>
+            <form id="pizzaForm">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ render_field(pizza_form.tamanioPizza, class="form-check-input", label_class="form-check-label") }}
+                        </div>
+                        
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ render_field(pizza_form.jamon, class="form-check-input", label_class="form-check-label") }}
+                        </div>
+                        <div class="form-group">
+                            {{ render_field(pizza_form.pinia, class="form-check-input", label_class="form-check-label") }}
+                        </div>
+                        <div class="form-group">
+                            {{ render_field(pizza_form.champinones, class="form-check-input", label_class="form-check-label") }}
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    {{ render_field(pizza_form.numero_pizzas, class="form-control", placeholder="Número de Pizzas") }}
+                </div>
+                <input type="hidden" id="id" name="id" value="">
+                <button type="button" id="agregar" class="btn btn-success mt-3">Agregar</button>
+            </form>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <h3>Detalle del Pedido</h3>
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>Tamaño</th>
+                        <th>Ingredientes</th>
+                        <th>Número de Pizzas</th>
+                        <th>Subtotal</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tblPizza">
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <h3>Ventas</h3>
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Total</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for venta in ventas %}
+                    <tr>
+                        <td>{{ venta.nombre }}</td>
+                        <td>{{ venta.total }}</td>
+                        <td>{{ venta.created_date }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+    
+    let pizzas = [];
+
+    document.getElementById('id').value = '';
+    cargarPizzas();
+
+    function cargarPizzas() {
+        let tblPizza = document.getElementById('tblPizza');
+        tblPizza.innerHTML = '';
+
+        pizzas.forEach(pizza => {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${pizza.tamanio}</td>
+                <td>${pizza.ingredientes}</td>
+                <td>${pizza.numero_pizzas}</td>
+                <td>${pizza.subtotal}</td>
+                <td>
+                    <a href="#" onclick="modificarPizza(${pizza.id})">Modificar</a> | 
+                    <a href="#" onclick="eliminarPizza(${pizza.id})">Eliminar</a>
+                </td>
+            `;
+            tblPizza.appendChild(tr);
+        });
+
+        document.getElementById('total').value = pizzas.reduce((acc, pizza) => acc + pizza.subtotal, 0);
+    }
+
+    function eliminarPizza(id) {
+        pizzas = pizzas.filter(pizza => pizza.id != id);
+        cargarPizzas();
+    }
+
+    function modificarPizza(id) {
+        let pizza = pizzas.find(pizza => pizza.id == id);
+        document.getElementsByName('tamanioPizza').forEach(tamanio => {
+            if (tamanio.value == pizza.tamanio) {
+                tamanio.checked = true;
+            }
+        });
+        if (pizza.ingredientes.includes('jamon')) {
+            document.getElementById('jamon').checked = true;
+        }
+        if (pizza.ingredientes.includes('piña')) {
+            document.getElementById('pinia').checked = true;
+        }
+        if (pizza.ingredientes.includes('champiñones')) {
+            document.getElementById('champinones').checked = true;
+        }
+        document.getElementById('numero_pizzas').value = pizza.numero_pizzas;
+        document.getElementById('id').value = pizza.id;
+    }
+
+    function guardarPizza() {
+        if (document.getElementById('id').value != '') {
+            console.log('modificar');
+            let index = pizzas.findIndex(pizza => pizza.id == document.getElementById('id').value);
+            let tamanios = document.getElementsByName('tamanioPizza');
+            let tamanio = Array.from(tamanios).find(t => t.checked).value;
+            let ingredientes = Array.from(document.querySelectorAll('[name="ingredientes"]:checked')).map(checkbox => checkbox.value).join(', ');
+
+            pizzas[index].tamanio = tamanio;
+            pizzas[index].ingredientes = ingredientes;
+            pizzas[index].numero_pizzas = document.getElementById('numero_pizzas').value;
+            pizzas[index].subtotal = calcularSubtotal(tamanio, document.getElementById('numero_pizzas').value, ingredientes);
+
+            document.getElementById('id').value = '';
+            cargarPizzas();
+            return;
+        }
+
+        let tamanios = document.getElementsByName('tamanioPizza');
+        let tamanio = Array.from(tamanios).find(t => t.checked).value;
+        let ingredientes = Array.from(document.querySelectorAll('[name="ingredientes"]:checked')).map(checkbox => checkbox.value).join(', ');
+
+        let pizza = {
+            id: pizzas.length + 1,
+            tamanio: tamanio,
+            ingredientes: ingredientes,
+            numero_pizzas: document.getElementById('numero_pizzas').value,
+            subtotal: calcularSubtotal(tamanio, document.getElementById('numero_pizzas').value, ingredientes)
+        }
+        pizzas.push(pizza);
+        cargarPizzas();
+    }
+
+    function calcularSubtotal(tamanio, numero_pizzas, ingredientes) {
+        console.log(ingredientes);
+        let precio = 0;
+        if (tamanio == 'chica') {
+            precio = 40;
+        } else if (tamanio == 'mediana') {
+            precio = 80;
+        } else if (tamanio == 'grande') {
+            precio = 120;
+        }
+        if (ingredientes.includes('jamon')) {
+            precio += 10;
+        }
+        if (ingredientes.includes('pinia')) {
+            precio += 10;
+        }
+        if (ingredientes.includes('champinones')) {
+            precio += 10;
+            console.log('tenia champ');
+        }
+        return precio * numero_pizzas;
+    }
+
+    document.getElementById('agregar').addEventListener('click', function (event) {
+        event.preventDefault();
+        guardarPizza();
+    });
+</script>
+{% endblock %}

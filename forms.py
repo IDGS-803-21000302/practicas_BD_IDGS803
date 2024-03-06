@@ -1,5 +1,5 @@
 from wtforms import Form
-from wtforms import StringField, SelectField,RadioField,EmailField,IntegerField, FloatField,SelectMultipleField,SubmitField,HiddenField
+from wtforms import StringField, SelectField,RadioField,EmailField,IntegerField, FloatField,BooleanField
 from wtforms import validators
 
 
@@ -44,31 +44,18 @@ class UsersForm2(Form):
 
     sueldo = FloatField('Sueldo')
 
-class PizzaOrderForm(Form):
-    # Datos del cliente
-    nombre = StringField('Nombre Completo', [
-        validators.DataRequired(message='El campo es requerido'),
-        validators.Length(min=4, message='Ingrese un nombre válido')
-    ])
-    direccion = StringField('Dirección', [
-        validators.DataRequired(message='El campo es requerido'),
-        validators.Length(min=4, message='Ingrese una dirección válida')
-    ])
-    telefono = StringField('Teléfono', [
-        validators.DataRequired(message='El campo es requerido'),
-        validators.Length(min=7, message='Ingrese un teléfono válido')
-    ])
-    fecha_compra = StringField('Fecha de Compra', [
-        validators.DataRequired(message='El campo es requerido')
-    ]) # Puedes usar un campo de tipo DateField si prefieres manejar la fecha directamente como un objeto de fecha.
+class VentaForm(Form):
+    id = IntegerField("id")
+    nombre = StringField("nombre", [validators.DataRequired(message='el campo es requerido'), validators.length(min=4,max=10,message='ingresa nombre valido')])
+    direccion = StringField("Direccion", [validators.DataRequired(message='el campo es requerido'), validators.length(min=4,max=10,message='ingresa direccion valida')])
+    telefono = StringField("Telefono", [validators.DataRequired(message='el campo es requerido'), validators.length(min=4,max=10,message='ingresa telefono valido')])
+    total = FloatField("Total", render_kw={'readonly': True})
     
-    # Detalles de la pizza
-    tamano_pizza = RadioField('Tamaño de Pizza', choices=[('chica', 'Chica $40'), ('mediana', 'Mediana $80'), ('grande', 'Grande $120')], validators=[validators.DataRequired()])
-    ingredientes = SelectMultipleField('Ingredientes', choices=[('jamon', 'Jamón $10'), ('piña', 'Piña $10'), ('champinones', 'Champiñones $10')]) # La lista de choices probablemente venga de tu base de datos
-    numero_pizzas = IntegerField('Número de Pizzas', [
-        validators.DataRequired(message='El campo es requerido'),
-        validators.NumberRange(min=1, message='Debe pedir al menos una pizza')
-    ])
-    agregar = SubmitField('Agregar')
-    registrar = SubmitField('Registrar')
-    csrf_token = HiddenField()
+class PizzaForm(Form):
+    tamanioPizza = RadioField("Tamaño de Pizza", choices=[('chica','Chica $40'),('mediana','Mediana $80'),('grande','Grande $120')], default='chica')
+    telefono = StringField("Telefono")
+    jamon = BooleanField("Jamon $10")
+    pinia = BooleanField("Piña $10")
+    champinones = BooleanField("Champiñones $10")
+    numero_pizzas = IntegerField("Numero de Pizzas", default=1)
+    

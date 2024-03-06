@@ -6,8 +6,8 @@ from flask import g
 from config import DevelopmentConfig
 import forms
 
-from models import Pizza, db
-from models import Trabajadores,Cliente
+from models import db
+from models import Trabajadores,Venta
 
 app = Flask(__name__)
 app.config.from_object(DevelopmentConfig)
@@ -31,68 +31,28 @@ def index():
         db.session.commit()
     return render_template("index.html",form=tra_form)
 
-@app.route("/confirmar_pedido")
-def confirmar_pedido():
-    costo_total = request.args.get('costo_total', 0, type=float)
-    return render_template("confirmar.html", costo_total=costo_total)
+@app.route('/pizzeria', methods=['GET', 'POST'])
+def pizzeria():
+    venta_form = forms.VentaForm(request.form)
+    ventas = buscar_ventas_por_fecha(None)
+    pizza_form = forms.PizzaForm(request.form)
+    return render_template("ABC_Pizzeria.html", form = venta_form, pizza_form = pizza_form,ventas = ventas)
 
-@app.route("/pedido", methods=["GET", "POST"])
-def agregar_pedido():
-    if 'pizzas' not in session:
-        session['pizzas'] = []
-    print('Hola')
-    pedido_form = forms.PizzaOrderForm(request.form)
-    if request.method == 'POST':
-        if 'pizza' in request.form:  # Verifica si el botón presionado es "agregar"
-            tamano_pizza = request.form.get('tamano_pizza')
-            ingredientes = request.form.get('ingredientes')
-            numero_pizzas = request.form.get('numero_pizzas')
-            # Aquí podrías calcular el sub total basado en tu lógica de negocio
-            sub_total = 0  # Supongamos que es 0 por ahora
+@app.route('/get-ventas')
+def ventas():
+    date_str = request.args.get('date')
+    ventas = buscar_ventas_por_fecha(date_str)
+    return redirect(url_for('pizzeria', ventas=ventas))
 
-            # Agrega la pizza a la lista en sesión
-            session['pizzas'].append({
-                'tamano': tamano_pizza,
-                'ingredientes': ingredientes,
-                'numero': numero_pizzas,
-                'sub_total': sub_total
-            })
-            session.modified = True
-        elif 'tn1' in request.form:
-            print('entro')
-            nuevo_cliente = Cliente(
-                nombre=pedido_form.nombre.data,
-                direccion=pedido_form.direccion.data,
-                telefono=pedido_form.telefono.data
-            )
-            db.session.add(nuevo_cliente)
-            db.session.flush()  # Esto es para obtener el ID del cliente antes de hacer commit
-            costo_total=0
-            for pizza in session['pizzas']:
-                nueva_pizza = Pizza(
-                    tamano=pizza['tamano'],
-                    ingredientes=pizza['ingredientes'],
-                    precio=0,  # Supongamos que aquí se calcula el precio real
-                    id_cliente=nuevo_cliente.id
-                )
-                db.session.add(nueva_pizza)
-                costo_total += nueva_pizza.precio  # Asumiendo que cada pizza tiene un precio ya definido
-
-            db.session.commit()
-            # Limpia las pizzas de la sesión después de registrar
-            session.pop('pizzas', None)
-
-            # Redireccionar a una ruta de confirmación con el costo total
-            return redirect(url_for('confirmar_pedido', costo_total=costo_total))
-            
-            
-    else:
-        print('No entro')
-        
-        
-
-    return render_template("pedidos.html", form=pedido_form,pizzas=session.get('pizzas', []))
-
+@app.route('/dispatch', methods=['POST'])
+def dispatch():
+    venta_form = forms.VentaForm(request.form)
+    if request.method == "POST" and venta_form.validate():
+        venta = Venta(nombre = venta_form.nombre.data, direccion = venta_form.direccion.data, telefono = venta_form.telefono.data, total = venta_form.total.data)
+        db.session.add(venta)
+        db.session.commit()
+        flash("Se ha realizado la venta")
+    return redirect(url_for('pizzeria'))
 
 @app.route("/ABC_Completo")
 def ABC_Completo():
@@ -189,6 +149,16 @@ def alum():
         
     return render_template("alumnos.html",form=alum_form,nom=nom,apa=apa,ama=ama)
 
+def buscar_ventas_por_fecha(date_str):
+    try:
+        if date_str is None:
+            ventas = Venta.query.all()
+        else:
+            date = datetime.strptime(date_str, '%Y-%m-%d')
+            ventas = Venta.query.filter(Venta.created_date >= date).all()
+        return ventas
+    except ValueError:
+        return "Formato de fecha no válido. Utiliza el formato YYYY-MM-DD", 400
 
 if __name__== "__main__":
     csrf.init_app(app)
